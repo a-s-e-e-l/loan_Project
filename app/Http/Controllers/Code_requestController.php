@@ -11,16 +11,14 @@ class Code_requestController extends Controller
     {
         $code = mt_rand(1000,9999);
         $fields=$request->validate(['phone_number'=>'Required|string']);
+        /** @noinspection PhpUndefinedMethodInspection */
         $user = User::where('phone_number',$fields['phone_number'])->first();
         if (empty($user)) {
             $form_data = array(
-                'phone_number'  =>  $request->phone_number,
-                'first_name' =>  "",
-                'last_name' =>  "",
-                'email' =>  "", 
-                'address' =>  "",
+                'phone_number'  =>  $request->input('phone_number'),
                 'activation_code' =>  $code,
             );
+            /** @noinspection PhpUndefinedMethodInspection */
             User::create($form_data);
         }else{
             $user->activation_code = $code;
