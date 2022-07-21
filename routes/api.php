@@ -4,6 +4,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\Code_requestController;
 use App\Http\Controllers\update_userController;
 use App\Http\Controllers\paymentController;
+use App\Http\Controllers\pay_loanController;
 use App\Http\Controllers\all_userController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -21,11 +22,13 @@ use Illuminate\Support\Facades\Route;
 Route::post('/request/code', [Code_requestController::class, 'code_request']);
 //Route::post('/login', [LoginController::class, 'login']);
 Route::post('/process/verification/code', [LoginController::class, 'login']);
-Route::post('/user/update', [update_userController::class, 'update']);
+Route::post('/user/update/{id}', [update_userController::class, 'update']);
 Route::post('/process/payment', [paymentController::class, 'payment']);
-Route::post('/users/all', [all_userController::class, 'all_user']);
-Route::post('/users/debtor', [all_userController::class, 'debtor_user']);
-Route::post('/users/creditor', [all_userController::class, 'creditor_user']);
+Route::post('/process/pay', [pay_loanController::class, 'pay']);
+Route::get('/users/all/{id}', [all_userController::class, 'all_user']);
+Route::get('/users/lender/{id}', [all_userController::class, 'lender_user']);
+Route::get('/users/creditor/{id}', [all_userController::class, 'creditor_user']);
+Route::post('/users/select/{id}', [all_userController::class, 'select_user']);
 
 
 

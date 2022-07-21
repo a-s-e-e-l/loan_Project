@@ -21,7 +21,7 @@ class update_userController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -32,7 +32,7 @@ class update_userController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function show($id)
@@ -43,30 +43,28 @@ class update_userController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $phone_number
+     * @param \Illuminate\Http\Request $request
+     * @param string $phone_number
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request)
-    {
-        $fields=$request->validate(['phone_number'=>'Required|string']);
-        $user = User::where('phone_number',$fields['phone_number'])->first();
+    public function update(Request $request, $id){
+        $user = User::where('id', $id)->first();
         if (empty($user)) {
             $response = [
                 'Error' => "wrong mobile phone",
             ];
             return response($response, 200);
-        }else{
+        } else {
             $user->first_name = $request->input('first_name');
             $user->last_name = $request->input('last_name');
             $user->email = $request->input('email');
             $user->address = $request->input('address');
             $vimage = $request->file('file');
-            if(!empty($vimage)){
+            if (!empty($vimage)) {
                 $request->validate([
-                    'phone_number'=>'Required|string',
+                    'phone_number' => 'Required|string',
                     'file' => 'required|mimes:png,jpg,jpeg,gif|max:2048',
-                ]);   
+                ]);
                 if ($request->file('file')) {
                     $file = $request->file('file')->store('public/files');
                     $user->image = $file;
@@ -77,23 +75,22 @@ class update_userController extends Controller
                     ];
                     return response($response, 200);
                 }
-            }else{
+            } else {
                 $user->update();
                 $response = [
-                'user' => $user,
+                    'user' => $user,
                 ];
                 return response($response, 200);
             }
         }
-        
 
-        
+
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
