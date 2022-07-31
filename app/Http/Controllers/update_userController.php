@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Validator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use phpDocumentor\Reflection\Types\Array_;
 
 class update_userController extends Controller
 {
@@ -40,51 +42,54 @@ class update_userController extends Controller
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param string $phone_number
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id){
-        $user = User::where('id', $id)->first();
-        if (empty($user)) {
+//    /**
+//     * Update the specified resource in storage.
+//     *
+//     * @param \Illuminate\Http\Request $request
+//     * @param int $id
+//     * @return \Illuminate\Http\Response
+//     */
+    public function update(Request $request)
+    {
+        $user = Auth::user();
+//        if (empty($user)) {
+//            $response = [
+//                'Error' => "user no login   Error token",
+//            ];
+//            return response($response, 200);
+//        } else {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'Required',
+            'last_name' => 'Required',
+            'email' => 'Required|email|max:32',
+            'address' => 'Required',
+            'image' => 'mimes:png,jpg,jpeg,gif|max:2048',
+        ]);
+        if ($validator->fails()) {
             $response = [
-                'Error' => "wrong mobile phone",
+                'Message' => $validator->errors(),
+                'data' => null,
+                'success' => false,
             ];
             return response($response, 200);
-        } else {
-            $user->first_name = $request->input('first_name');
-            $user->last_name = $request->input('last_name');
-            $user->email = $request->input('email');
-            $user->address = $request->input('address');
-            $vimage = $request->file('file');
-            if (!empty($vimage)) {
-                $request->validate([
-                    'phone_number' => 'Required|string',
-                    'file' => 'required|mimes:png,jpg,jpeg,gif|max:2048',
-                ]);
-                if ($request->file('file')) {
-                    $file = $request->file('file')->store('public/files');
-                    $user->image = $file;
-                    $user->update();
-                    $response = [
-                        "message" => "File successfully uploaded",
-                        'user' => $user,
-                    ];
-                    return response($response, 200);
-                }
-            } else {
-                $user->update();
-                $response = [
-                    'user' => $user,
-                ];
-                return response($response, 200);
-            }
         }
-
-
+        $file = null;
+        if ($request->hasFile('image')) {
+            $filename = $request->image->getClientOriginalName();
+            $file = $request->image->storeAs('images', $filename, 'public');
+        }
+        $user->update(array_merge(
+            $validator->validated(), [
+                'image' => $file,
+            ]
+        ));
+        $response = [
+            'Message' => 'user',
+            'data' => $user,
+            'success' => true,
+        ];
+        return response($response, 200);
+//        }
     }
 
     /**
@@ -96,5 +101,42 @@ class update_userController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function edit()
+    {
+        $user = Auth::user();
+        $response = [
+            'Message' => 'user',
+            'data' => $user,
+            'success' => true,
+        ];
+        return response($response, 200);
+    }
+
+    public function setup(Request $request)
+    {
+        $user = Auth::user();
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'Required',
+            'last_name' => 'Required',
+            'email' => 'Required|email|max:32',
+            'address' => 'Required',
+        ]);
+        if ($validator->fails()) {
+            $response = [
+                'Message' => $validator->errors(),
+                'data' => null,
+                'success' => false,
+            ];
+            return response($response, 200);
+        }
+        $user->update($validator->validated());
+        $response = [
+            'Message' => 'user',
+            'data' => $user,
+            'success' => true,
+        ];
+        return response($response, 200);
     }
 }

@@ -20,9 +20,9 @@ class User extends Authenticatable
     protected $fillable = [
         'phone_number',
         'activation_code' ,
-        'first_name', 
-        'last_name', 
-        'email', 
+        'first_name',
+        'last_name',
+        'email',
         'address',
         'image',
     ];
@@ -44,4 +44,20 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+//    public function transactions()
+//    {
+//        return $this->hasMany(Transaction::class);
+//    }
+    public function transactions(){
+        return $this->hasOne(Transaction::class, 'payer_phone', 'phone_number');
+    }
+    public function debt(){
+        return $this->hasOne(Debt::class, 'debitor_phone', 'phone_number');
+    }
+    public function notifications(){
+        return $this->hasOne(Debt::class, 'user_id', 'phone_number');
+    }
+
+
 }

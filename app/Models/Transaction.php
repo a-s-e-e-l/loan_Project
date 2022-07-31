@@ -13,8 +13,27 @@ class Transaction extends Model
 
     protected $fillable = [
         'payer_phone',
-        'recipient_phone' ,
-        'amount_paid',
+        'recipient_phone',
+        'amount',
+        'note',
+        'deadline',
+        'agree',
+        'type',
     ];
+    protected $foreignKey = 'payer_phone';
+
+//    public function user()
+//    {
+//        return $this->belongsTo(User::class);
+//    }
+    public function users()
+    {
+        return $this->belongsTo(User::class, 'payer_phone', 'phone_number');
+    }
+
+//    public function users_r()
+//    {
+//        return $this->belongsTo(User::class, 'recipient_phone', 'phone_number');
+//    }
 
 }

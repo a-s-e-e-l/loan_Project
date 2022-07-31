@@ -7,23 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class Debt extends Model
+class Notification extends Model
 {
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'creditor_phone',
-        'debitor_phone',
-        'amount_debt',
-        'note',
+        'data',
+        'nontice_from',
+        'notifiable_id',
+        'notifiable_type',
     ];
 
     public function users()
     {
-        return $this->belongsTo(User::class, 'debitor_phone', 'phone_number');
+        return $this->belongsTo(User::class, 'nontice_from', 'phone_number');
     }
-//    public function users_cr()
-//    {
-//        return $this->belongsTo(User::class, 'creditor_phone', 'phone_number');
-//    }
 }

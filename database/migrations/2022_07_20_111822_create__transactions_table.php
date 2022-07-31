@@ -17,10 +17,15 @@ class CreateTransactionsTable extends Migration
             $table->id();
             $table->string('payer_phone');
             $table->string('recipient_phone');
-            $table->double('amount_paid');
+            $table->double('amount');
+            $table->dateTime('deadline')->nullable();
+            $table->boolean('agree')->default(false);
+            $table->enum('type', ['Payment', 'debt']);
+            $table->string('note')->nullable();
             $table->foreign('payer_phone')->references('phone_number')->on('users');
             $table->foreign('recipient_phone')->references('phone_number')->on('users');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Debt;
 use App\Models\Transaction;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class pay_loanController extends Controller
 {
@@ -21,7 +25,7 @@ class pay_loanController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -32,7 +36,7 @@ class pay_loanController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function show($id)
@@ -43,8 +47,8 @@ class pay_loanController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param \Illuminate\Http\Request $request
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
@@ -55,7 +59,7 @@ class pay_loanController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
@@ -63,65 +67,112 @@ class pay_loanController extends Controller
         //
     }
 
-    public function pay(Request $request)
+    public function Payment(Request $request)
     {
-        $fields = $request->validate([
-            'recipient_phone' => 'Required',
-            'payer_phone' => 'Required',
-            'amount_paid' => 'Required',
+        $user = Auth::user();
+        $validator = Validator::make($request->all(), [
+            'phone' => 'Required|regex:/^([0-9\s\-\+\(\)]*)$/|min:10',
+            'amount' => 'Required|regex:/^\d+(\.\d{1,2})?$/',
         ]);
-        $debt = Debt::where('creditor_phone',$fields['recipient_phone'])
-            ->where('lender_phone', $fields['payer_phone'])
-            ->first();
-        if(empty($debt)) {
-            $debt_opposite = Debt::where('creditor_phone',$fields['payer_phone'])
-                ->where('lender_phone', $fields['recipient_phone'])
-                ->first();
-            $old_amount_debt=$debt_opposite->value('amount_debt');
-            $new_amount_paid=$request->input('amount_paid');
-            if ($old_amount_debt > 0) {
-                $debt_opposite->amount_debt = $old_amount_debt-$new_amount_paid;
-                $debt_opposite->update();
-                $form_data_transaction = array(
-                    'recipient_phone' => $request->input('recipient_phone'),
-                    'payer_phone' => $request->input('payer_phone'),
-                    'amount_paid' => $request->input('amount_paid'),
-                );
-                $transaction = Transaction::create($form_data_transaction);
-                $response = [
-                    'debt' => $debt_opposite,
-                    'transaction' => $transaction,
-                ];
-                return response($response, 200);
-            }else{
-                $response = [
-                    'Error' => "There is no loan to pay off",
-                ];
-                return response($response, 200);
-            }
-        }else {
-            $old_amount_debt=$debt->value('amount_debt');
-            $new_amount_paid=$request->input('amount_paid');
-            if ($old_amount_debt <0) {
-                $debt->amount_debt = $old_amount_debt+$new_amount_paid;
-                $debt->update();
-                $form_data_transaction = array(
-                    'recipient_phone' => $request->input('recipient_phone'),
-                    'payer_phone' => $request->input('payer_phone'),
-                    'amount_paid' => $request->input('amount_paid'),
-                );
-                $transaction = Transaction::create($form_data_transaction);
-                $response = [
-                    'debt' => $debt,
-                    'transaction' => $transaction,
-                ];
-                return response($response, 200);
-            }else{
-                $response = [
-                    'Error' => "There is no loan to pay off",
-                ];
-                return response($response, 200);
-            }
+        if ($validator->fails()) {
+            $response = [
+                'Message' => $validator->errors(),
+                'data' => null,
+                'success' => false,
+            ];
+            return response($response, 200);
         }
+        $payment_debitor = Transaction::where('payer_phone', $user['phone_number'])
+            ->where('recipient_phone', $request['phone'])
+            ->where('type', "debt")
+            ->where('agree', false)
+            ->first();
+        $payment_creditor = Transaction::where('recipient_phone', $user['phone_number'])
+            ->where('payer_phone', $request['phone'])
+            ->where('type', "debt")
+            ->where('agree', false)
+            ->first();
+        $transaction = ((empty($payment_debitor) && empty($payment_creditor)) ? null : (empty($payment_debitor))) ? $payment_creditor : $payment_debitor;
+        if ($transaction == null) {
+            $response = [
+                'Message' => "There is no loan to pay off",
+                'data' => null,
+                'success' => false,
+            ];
+            return response($response, 200);
+        }
+        $amount = $request['amount'];
+        $debt_debitor = Debt::where('debitor_phone', $user->phone_number)
+            ->where('creditor_phone', $request['phone'])
+            ->first();
+        $debt_creditor = Debt::where('creditor_phone', $user->phone_number)
+            ->where('debitor_phone', $request['phone'])
+            ->first();
+        $debt = ((empty($debt_debitor) && empty($debt_creditor)) ? null : (empty($debt_creditor))) ? $debt_debitor : $debt_creditor;
+        if ($transaction->payer_phone == $user->phone_number) {
+            if ($debt->debitor_phone == $user->phone_number) {
+                $amount *= -1;
+            }
+            $debt_data = array(
+                'amount_debt' => $debt->amount_debt + $amount,
+            );
+            $debt->update($debt_data);
+            $transaction_data = array(
+                'recipient_phone' => $user['phone_number'],
+                'payer_phone' => $request['phone'],
+                'amount' => $request['amount'],
+                'note' => $request['note'],
+                'type' => "Payment",
+            );
+            $t = Transaction::create($transaction_data);
+        } else {
+            if ($debt->creditor_phone == $user->phone_number) {
+                $amount *= -1;
+            }
+            $debt_data = array(
+                'amount_debt' => $debt->amount_debt + $amount,
+            );
+            $debt->update($debt_data);
+            $transaction_data = array(
+                'recipient_phone' => $request['phone'],
+                'payer_phone' => $user['phone_number'],
+                'amount' => $request['amount'],
+                'note' => $request['note'],
+                'type' => "Payment",
+            );
+            $t = Transaction::create($transaction_data);
+        }
+        $response = [
+            'Message' => "added payment",
+            'data' => $t,
+            'success' => true,
+        ];
+        return response($response, 200);
     }
+
+
+    public function accept(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'transaction_id' => 'Required',
+        ]);
+        if ($validator->fails()) {
+            $response = [
+                'Message' => $validator->errors(),
+                'data' => null,
+                'success' => false,
+            ];
+            return response($response, 200);
+        }
+        $debt = Transaction::where('id', $request['transaction_id'])->first;
+        $debt->agree = true;
+        $debt->save();
+        $response = [
+            'Message' => "Accepted",
+            'data' => null,
+            'success' => true,
+        ];
+        return response($response, 200);
+    }
+
 }

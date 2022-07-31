@@ -21,10 +21,11 @@ class CreateUsersTable extends Migration
             $table->string('last_name')->nullable();
             $table->string('email')->nullable();
             $table->string('address')->nullable();
-            $table->string('image')->default('public/files/Z65BOmu9FId1EsEC2P6Wq5dsLdTUzSTePXuA33rg.png');
+            $table->string('image')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

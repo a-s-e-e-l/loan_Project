@@ -6,7 +6,12 @@ use App\Models\Debt;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Validator;
+use Illuminate\Support\Facades\Validator;
+use phpDocumentor\Reflection\Types\Array_;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class all_userController extends Controller
 {
@@ -65,110 +70,180 @@ class all_userController extends Controller
         //
     }
 
-    public function all_user($id){
-        $user = User::where('id', $id)->first();
-        $lender = Debt::where('lender_phone', $user['phone_number'])->first();
-        $creditor = Debt::where('creditor_phone', $user['phone_number'])->first();
-        $lender_user = null;
-        $creditor_user = null ;
-        if (empty($lender)&&($creditor)){
-            $response = [
-                'msg'=> "No Users"
-            ];
-            return response($response, 200);
-        }elseif (empty($lender)){
-            $lender_user = User::where('phone_number',$creditor->lender_phone)->first();
-        }elseif (empty($creditor)){
-            $creditor_user = User::where('phone_number',$lender->creditor_phone)->first();
-        } else{
-            $creditor_user = User::where('phone_number',$lender->creditor_phone)->first();
-            $lender_user = User::where('phone_number',$creditor->lender_phone)->first();
-        }
-        $response = [
-            'lender' => $lender,
-            'creditor' => $creditor,
-            'Lender User' => $lender_user,
-            'Creditor User' => $creditor_user
-        ];
-        return response($response, 200);
-    }
-
-    public function lender_user($id){
-        $user = User::where('id', $id)->first();
-        $creditor = Debt::where('creditor_phone', $user['phone_number'])->first();
-        if (empty($lender)){
-            $response = [
-                'msg'=> "No Users lender"
-            ];
-            return response($response, 200);
-        }else{
-            $lender_user = User::where('phone_number',$creditor->lender_phone)->first();
-            $response = [
-                'lender' => $lender,
-                'Lender User' => $lender_user
-            ];
-            return response($response, 200);
-        }
-    }
-
-    public function creditor_user($id){
-        $user = User::where('id', $id)->first();
-        $lender = Debt::where('lender_phone', $user['phone_number'])->first();
-        if (empty($creditor)){
-            $response = [
-                'msg'=> "No Users creditor"
-            ];
-            return response($response, 200);
-        }else{
-            $creditor_user = User::where('phone_number',$lender->creditor_phone)->first();
-            $response = [
-                'creditor' => $creditor,
-                'Creditor User' => $creditor_user
-            ];
-            return response($response, 200);
-        }
-    }
-    public function select_user(Request $request,$id)
+    public function all_user()
     {
-        $user = User::where('id', $id)->first();
-        $fields = $request->validate([
-            'select_phone' => 'Required',
-        ]);
-        $lender = Debt::where('lender_phone', $user['phone_number'])
-            ->where('creditor_phone', $fields['select_phone'])
-            ->first();
-        $creditor = Debt::where('creditor_phone', $user['phone_number'])
-            ->where('lender_phone', $fields['select_phone'])
-            ->first();
-        $user_lender_select = null;
-        $user_creditor_select = null;
-        $debt_creditor=null;
-        $debt_lender=null;
-        if (empty($lender)&&empty($creditor)) {
+        $user = Auth::user();
+        $users = array();
+        $debts = Debt::where('debitor_phone', $user['phone_number'])
+            ->orWhere('creditor_phone', $user['phone_number'])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+        $debt = (empty($debts)) ? null : $debts;
+        if (empty($debt)) {
             $response = [
-                'msg' => "An error in the selected user number",
+                'Message' => 'No Users',
+                'data' => $debt,
+                'success' => false,
             ];
             return response($response, 200);
-        }elseif (empty($creditor)){
-            $user_creditor_select = User::where('phone_number', $lender['creditor_phone'])->first();
-            $debt_creditor = Debt::where('creditor_phone', $user_creditor_select['phone_number'])->first();
-        }elseif (empty($lender)){
-            $user_lender_select = User::where('phone_number', $creditor['lender_phone'])->first();
-            $debt_lender = Debt::where('lender_phone', $user_lender_select['phone_number'])->first();
-        } else{
-            $user_creditor_select = User::where('phone_number', $lender['creditor_phone'])->first();
-            $user_lender_select = User::where('phone_number', $creditor['lender_phone'])->first();
-            $debt_creditor = Debt::where('creditor_phone', $user_lender_select['phone_number'])->first();
-            $debt_lender = Debt::where('lender_phone', $user_creditor_select['phone_number'])->first();
         }
+        foreach ($debt as $res) {
+            $u = User::where('phone_number', $res->debitor_phone)
+                ->where('id', '!=', $user->id)
+                ->orWhere('phone_number', $res->creditor_phone)
+                ->where('id', '!=', $user->id)
+                ->first();
+            $u = ' {"phone_number" : "' . $u['phone_number']
+                . '","Full name" : "' . $u['first_name'] . ' ' . $u['last_name']
+                . '","image" : "' . $u['image'] . '"}';
+            $u = json_decode($u, true);
+            array_push($users, $u);
+        }
+        $data = $this->paginate($users);
         $response = [
-            'lender' => $lender,
-            'creditor' => $creditor,
-            'Lender Debt' => $debt_lender,
-            'Creditor Debt' => $debt_creditor
+            'Message' => 'All Users',
+            'data' => $data,
+            'success' => true,
         ];
         return response($response, 200);
     }
 
 
+    public function debitor_user()
+    {
+        $user = Auth::user();
+        $users = array();
+        $debts = Debt::where('creditor_phone', $user['phone_number'])
+            ->where('amount_debt', '>', 0)
+            ->orWhere('debitor_phone', $user['phone_number'])
+            ->where('amount_debt', '<', 0)
+            ->orderBy('updated_at', 'desc')
+            ->get();
+        $debt = (empty($debts)) ? null : $debts;
+        if (empty($debt)) {
+            $response = [
+                'Message' => 'No Users',
+                'data' => $debt,
+                'success' => false,
+            ];
+            return response($response, 200);
+        }
+        foreach ($debt as $res) {
+            $u = User::where('phone_number', $res->debitor_phone)
+                ->where('id', '!=', $user->id)
+                ->orWhere('phone_number', $res->creditor_phone)
+                ->where('id', '!=', $user->id)
+                ->first();
+            $u = ' {"phone_number" : "' . $u['phone_number']
+                . '","Full name" : "' . $u['first_name'] . ' ' . $u['last_name']
+                . '","image" : "' . $u['image'] . '"}';
+            $u = json_decode($u, true);
+            array_push($users, $u);
+        }
+        $data = $this->paginate($users);
+        $response = [
+            'Message' => 'Debitor Users',
+            'data' => $data,
+            'success' => true,
+        ];
+        return response($response, 200);
+    }
+
+    public function creditor_user()
+    {
+        $user = Auth::user();
+        $users = array();
+        $debts = Debt::where('debitor_phone', $user['phone_number'])
+            ->where('amount_debt', '>', 0)
+            ->orWhere('creditor_phone', $user['phone_number'])
+            ->where('amount_debt', '<', 0)
+            ->orderBy('updated_at', 'desc')
+            ->get();
+        $debt = (empty($debts)) ? null : $debts;
+        if (empty($debt)) {
+            $response = [
+                'Message' => 'No Users',
+                'data' => $debt,
+                'success' => false,
+            ];
+            return response($response, 200);
+        }
+        foreach ($debt as $res) {
+            $u = User::where('phone_number', $res->debitor_phone)
+                ->where('id', '!=', $user->id)
+                ->orWhere('phone_number', $res->creditor_phone)
+                ->where('id', '!=', $user->id)
+                ->first();
+            $u = ' {"phone_number" : "' . $u['phone_number']
+                . '","Full name" : "' . $u['first_name'] . ' ' . $u['last_name']
+                . '","image" : "' . $u['image'] . '"}';
+            $u = json_decode($u, true);
+            array_push($users, $u);
+        }
+        $data = $this->paginate($users);
+        $response = [
+            'Message' => 'Creditor Users',
+            'data' => $data,
+            'success' => true,
+        ];
+        return response($response, 200);
+    }
+
+    function search(Request $request)
+    {
+        $user = Auth::user();
+        $users = array();
+        $validator = Validator::make($request->all(), [
+            'phone' => 'Required'
+        ]);
+        if ($validator->fails()) {
+            $response = [
+                'Message' => $validator->errors(),
+                'data' => null,
+                'success' => false,
+            ];
+            return response($response, 200);
+        }
+        $debts = Debt::where('debitor_phone', $user['phone_number'])
+            ->where('creditor_phone', 'like', '%' . $request['phone'] . '%')
+            ->orWhere('creditor_phone', $user['phone_number'])
+            ->where('debitor_phone', 'like', '%' . $request['phone'] . '%')
+            ->orderBy('updated_at', 'desc')
+            ->get();
+        $debt = (empty($debts)) ? null : $debts;
+        if (empty($debt)) {
+            $response = [
+                'Message' => 'No Users',
+                'data' => $debt,
+                'success' => false,
+            ];
+            return response($response, 200);
+        }
+        foreach ($debt as $res) {
+            $u = User::where('phone_number', $res->debitor_phone)
+                ->where('id', '!=', $user->id)
+                ->orWhere('phone_number', $res->creditor_phone)
+                ->where('id', '!=', $user->id)
+                ->first();
+            $u = ' {"phone_number" : "' . $u['phone_number']
+                . '","Full name" : "' . $u['first_name'] . ' ' . $u['last_name']
+                . '","image" : "' . $u['image'] . '"}';
+            $u = json_decode($u, true);
+            array_push($users, $u);
+        }
+        $data = $this->paginate($users);
+        $response = [
+            'Message' => 'User',
+            'data' => $data,
+            'success' => true,
+        ];
+        return response($response, 200);
+    }
+
+    public function paginate($items, $perPage = 5, $page = null, $options = [])
+    {
+        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $items = $items instanceof Collection ? $items : Collection::make($items);
+        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
+    }
 }
