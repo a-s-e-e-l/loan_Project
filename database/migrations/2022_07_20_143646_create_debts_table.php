@@ -16,12 +16,14 @@ class CreateDebtsTable extends Migration
         Schema::create('debts', function (Blueprint $table) {
             $table->id();
             $table->string('creditor_phone');
-            $table->string('lender_phone');
+            $table->string('debitor_phone');
             $table->double('amount_debt');
-            $table->dateTime('deadline');
+            $table->string('note')->nullable();
+            $table->boolean('agree')->default(false);
             $table->timestamps();
+            $table->softDeletes();
             $table->foreign('creditor_phone')->references('phone_number')->on('users');
-            $table->foreign('lender_phone')->references('phone_number')->on('users');
+            $table->foreign('debitor_phone')->references('phone_number')->on('users');
         });
     }
 

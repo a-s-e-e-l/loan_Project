@@ -20,11 +20,14 @@ class CreateUsersTable extends Migration
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
             $table->string('email')->nullable();
+            $table->dateTime('date_of_birth')->nullable();
             $table->string('address')->nullable();
-            $table->string('image')->default('public/files/Z65BOmu9FId1EsEC2P6Wq5dsLdTUzSTePXuA33rg.png');
+            $table->string('image')->nullable();
+            $table->boolean('draft')->default(true);
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

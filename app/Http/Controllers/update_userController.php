@@ -2,99 +2,91 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
-use Validator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class update_userController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function update(Request $request)
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param string $phone_number
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id){
-        $user = User::where('id', $id)->first();
-        if (empty($user)) {
+        $user = Auth::user();
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'Required',
+            'last_name' => 'Required',
+            'email' => 'Required|email|max:32',
+            'date_of_birth' => 'Required',
+            'address' => 'Required',
+            'image' => 'mimes:png,jpg,jpeg,gif|max:2048',
+        ]);
+        if ($validator->fails()) {
             $response = [
-                'Error' => "wrong mobile phone",
+                'message' => $validator->errors(),
+                'data' => null,
+                'success' => false,
             ];
             return response($response, 200);
-        } else {
-            $user->first_name = $request->input('first_name');
-            $user->last_name = $request->input('last_name');
-            $user->email = $request->input('email');
-            $user->address = $request->input('address');
-            $vimage = $request->file('file');
-            if (!empty($vimage)) {
-                $request->validate([
-                    'phone_number' => 'Required|string',
-                    'file' => 'required|mimes:png,jpg,jpeg,gif|max:2048',
-                ]);
-                if ($request->file('file')) {
-                    $file = $request->file('file')->store('public/files');
-                    $user->image = $file;
-                    $user->update();
-                    $response = [
-                        "message" => "File successfully uploaded",
-                        'user' => $user,
-                    ];
-                    return response($response, 200);
-                }
-            } else {
-                $user->update();
-                $response = [
-                    'user' => $user,
-                ];
-                return response($response, 200);
-            }
         }
-
-
+        if ($request->hasFile('image')) {
+            $filename = $request->image->getClientOriginalName();
+            $file = $request->image->storeAs('images', $filename, 'public');
+            $user->update(array_merge(
+                $validator->validated(), [
+                    'image' => $file,
+                ]
+            ));
+        }
+        $user = collect($user)->only(['phone_number', 'first_name', 'last_name',
+            'email', 'date_of_birth', 'address', 'image']);
+        $response = [
+            'message' => 'User',
+            'data' => $user,
+            'success' => true,
+        ];
+        return response($response, 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+    public function edit()
     {
-        //
+        $user = Auth::user();
+        $response = [
+            'message' => 'user',
+            'data' => $user,
+            'success' => true,
+        ];
+        return response($response, 200);
+    }
+
+    public function signup(Request $request)
+    {
+        $user = Auth::user();
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'Required',
+            'last_name' => 'Required',
+            'email' => 'Required|email|max:32',
+            'date_of_birth' => 'Required',
+            'address' => 'Required',
+        ]);
+        if ($validator->fails()) {
+            $response = [
+                'message' => $validator->errors(),
+                'data' => null,
+                'success' => false,
+            ];
+            return response($response, 200);
+        }
+        $user->update(array_merge(
+            $validator->validated(), [
+                'draft' => false,
+            ]
+        ));
+        $user = collect($user)->only(['phone_number', 'first_name', 'last_name',
+            'email', 'date_of_birth', 'address']);
+        $response = [
+            'message' => 'User',
+            'data' => $user,
+            'success' => true,
+        ];
+        return response($response, 200);
     }
 }
