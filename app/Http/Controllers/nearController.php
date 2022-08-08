@@ -7,6 +7,9 @@ use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -110,16 +113,24 @@ class nearController extends Controller
             ->where('type', "debt")
             ->where('created_at', '<', Carbon::now())
             ->latest()->first();
+        $data = $this->paginate($transactions);
         $response = [
             'message' => 'Select User',
             'data' => [
                 'amount ' => $debt->amount_debt,
                 'deadline' => $t_debt->deadline,
                 'user' => $select_user,
-                'transactions' => $transactions,
+                'transactions' => $data,
             ],
             'success' => true,
         ];
         return response($response, 200);
+    }
+
+    public function paginate($items, $perPage = 10, $page = null, $options = [])
+    {
+        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $items = $items instanceof Collection ? $items : Collection::make($items);
+        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
     }
 }
