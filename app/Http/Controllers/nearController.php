@@ -27,7 +27,7 @@ class nearController extends Controller
             ->latest()->first();
         $deadline_creditor = (empty($t_creditor)) ? null : $t_creditor->deadline;
 
-        $debt_creditor = Debt::select('debitor_phone', 'amount_debt')
+        $debt_creditor = Debt::select('creditor_phone', 'amount_debt')
             ->where('creditor_phone', $t_creditor->recipient_phone)
             ->where('debitor_phone', $user->phone_number)
             ->where('amount_debt', '>', 0)
@@ -36,7 +36,7 @@ class nearController extends Controller
             ->where('amount_debt', '<', 0)
             ->first();
         $near_creditor = (empty($debt_creditor)) ? null : $debt_creditor;
-        $debt_debitor = Debt::select('creditor_phone', 'amount_debt')
+        $debt_debitor = Debt::select('debitor_phone', 'amount_debt')
             ->where('debitor_phone', $t_debitor->payer_phone)
             ->where('creditor_phone', $user->phone_number)
             ->where('amount_debt', '>', 0)
