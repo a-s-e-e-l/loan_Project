@@ -16,6 +16,8 @@ class update_userController extends Controller
             'last_name' => 'Required',
             'email' => 'Required|email|max:32',
             'date_of_birth' => 'Required',
+            'address_line1' => 'Required',
+            'address_line2' => 'Required',
             'address' => 'Required',
             'image' => 'mimes:png,jpg,jpeg,gif|max:2048',
         ]);
@@ -65,6 +67,8 @@ class update_userController extends Controller
             'last_name' => 'Required',
             'email' => 'Required|email|max:32',
             'date_of_birth' => 'Required',
+            'address_line1' => 'Required',
+            'address_line2' => 'Required',
             'address' => 'Required',
         ]);
         if ($validator->fails()) {
