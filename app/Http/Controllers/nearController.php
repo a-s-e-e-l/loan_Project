@@ -17,12 +17,14 @@ class nearController extends Controller
         $user = Auth::user();
         $t_debitor = Transaction::where('recipient_phone', $user->phone_number)
             ->where('type', "debt")
+            ->orderBy('deadline')
             ->where('deadline', '>', Carbon::now())
             ->latest()->first();
         $deadline_debitor = (empty($t_debitor)) ? null : $t_debitor->deadline;
 
         $t_creditor = Transaction::where('payer_phone', $user->phone_number)
             ->where('type', "debt")
+            ->orderBy('deadline')
             ->where('deadline', '>', Carbon::now())
             ->latest()->first();
         $deadline_creditor = (empty($t_creditor)) ? null : $t_creditor->deadline;
