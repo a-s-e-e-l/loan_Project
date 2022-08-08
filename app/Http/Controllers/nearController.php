@@ -15,42 +15,36 @@ class nearController extends Controller
     public function near_debt()
     {
         $user = Auth::user();
-        $t_debitor = Transaction::where('payer_phone', $user->phone_number)
+        $t_debitor = Transaction::where('recipient_phone', $user->phone_number)
             ->where('type', "debt")
             ->where('deadline', '>', Carbon::now())
             ->latest()->first();
         $deadline_debitor = (empty($t_debitor)) ? null : $t_debitor->deadline;
-        $near_debitor = null;
 
-        $t_creditor = Transaction::where('recipient_phone', $user->phone_number)
+        $t_creditor = Transaction::where('payer_phone', $user->phone_number)
             ->where('type', "debt")
             ->where('deadline', '>', Carbon::now())
             ->latest()->first();
         $deadline_creditor = (empty($t_creditor)) ? null : $t_creditor->deadline;
-        $near_creditor = null;
 
-        if (empty($t_debitor)) {
-            $debt_creditor = Debt::select('debitor_phone', 'amount_debt')
-                ->where('creditor_phone', $user->phone_number)
-                ->where('debitor_phone', $t_creditor->payer_phone)
-                ->where('amount_debt', '>', 0)
-                ->orWhere('debitor_phone', $user->phone_number)
-                ->where('creditor_phone', $t_creditor->payer_phone)
-                ->where('amount_debt', '<', 0)
-                ->first();
-            $near_creditor = (empty($debt_creditor)) ? null : $debt_creditor;
-        }
-        if (empty($t_creditor)) {
-            $debt_debitor = Debt::select('creditor_phone', 'amount_debt')
-                ->where('debitor_phone', $user->phone_number)
-                ->where('creditor_phone', $t_debitor->recipient_phone)
-                ->where('amount_debt', '>', 0)
-                ->orWhere('creditor_phone', $user->phone_number)
-                ->where('debitor_phone', $t_debitor->recipient_phone)
-                ->where('amount_debt', '<', 0)
-                ->get();
-            $near_debitor = (empty($debt_debitor)) ? null : $debt_debitor;
-        }
+        $debt_creditor = Debt::select('debitor_phone', 'amount_debt')
+            ->where('creditor_phone', $t_creditor->recipient_phone)
+            ->where('debitor_phone', $user->phone_number)
+            ->where('amount_debt', '>', 0)
+            ->orWhere('debitor_phone', $t_creditor->recipient_phone)
+            ->where('creditor_phone', $user->phone_number)
+            ->where('amount_debt', '<', 0)
+            ->first();
+        $near_creditor = (empty($debt_creditor)) ? null : $debt_creditor;
+        $debt_debitor = Debt::select('creditor_phone', 'amount_debt')
+            ->where('debitor_phone', $t_debitor->payer_phone)
+            ->where('creditor_phone', $user->phone_number)
+            ->where('amount_debt', '>', 0)
+            ->orWhere('creditor_phone', $t_debitor->payer_phone)
+            ->where('debitor_phone', $user->phone_number)
+            ->where('amount_debt', '<', 0)
+            ->first();
+        $near_debitor = (empty($debt_debitor)) ? null : $debt_debitor;
         $response = [
             'message' => 'Near Creditor & Near Debitor',
             'data' => [

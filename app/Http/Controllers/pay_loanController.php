@@ -144,7 +144,7 @@ class pay_loanController extends Controller
         }
         $response = [
             'Message' => "added payment",
-            'data' => $t,
+            'data' => null,
             'success' => true,
         ];
         return response($response, 200);

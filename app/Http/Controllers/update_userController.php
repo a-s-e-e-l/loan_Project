@@ -31,15 +31,15 @@ class update_userController extends Controller
         }
         if ($request->hasFile('image')) {
             $filename = $request->image->getClientOriginalName();
-            $file = $request->image->storeAs('images', $filename, 'public');
+            $file = $request->image->storeAs('storage/images', $filename, 'public');
             $user->update(array_merge(
                 $validator->validated(), [
                     'image' => $file,
                 ]
             ));
         }
-        $user = collect($user)->only(['phone_number', 'first_name', 'last_name',
-            'email', 'date_of_birth', 'address', 'image']);
+        $user = collect($user)->only(['phone_number', 'first_name', 'last_name', 'email',
+            'date_of_birth', 'address', 'address_line1', 'address_line2', 'image']);
         $response = [
             'message' => 'User',
             'data' => $user,
@@ -51,6 +51,8 @@ class update_userController extends Controller
     public function edit()
     {
         $user = Auth::user();
+        $user = collect($user)->only(['phone_number', 'first_name', 'last_name', 'email',
+            'date_of_birth', 'address', 'address_line1', 'address_line2', 'image']);
         $response = [
             'message' => 'user',
             'data' => $user,
@@ -84,8 +86,8 @@ class update_userController extends Controller
                 'draft' => false,
             ]
         ));
-        $user = collect($user)->only(['phone_number', 'first_name', 'last_name',
-            'email', 'date_of_birth', 'address']);
+        $user = collect($user)->only(['phone_number', 'first_name', 'last_name', 'email',
+            'date_of_birth', 'address', 'address_line1', 'address_line2', 'image']);
         $response = [
             'message' => 'User',
             'data' => $user,

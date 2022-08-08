@@ -73,7 +73,7 @@ class paymentController extends Controller
         }
         $response = [
             'message' => "added creditor",
-            'data' => $transaction,
+            'data' => null,
             'success' => true,
         ];
         return response($response, 200);
@@ -164,7 +164,7 @@ class paymentController extends Controller
         $transaction = Transaction::create($transaction_data);
         $response = [
             'message' => "added debitor",
-            'data' => $transaction,
+            'data' => null,
             'success' => true,
         ];
         return response($response, 200);
