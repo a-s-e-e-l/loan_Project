@@ -174,5 +174,4 @@ class pay_loanController extends Controller
         ];
         return response($response, 200);
     }
-
 }

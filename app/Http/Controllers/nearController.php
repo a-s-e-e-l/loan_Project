@@ -31,25 +31,33 @@ class nearController extends Controller
             ->where('deadline', '>', Carbon::now())
             ->latest()->first();
         $deadline_creditor = (empty($t_creditor)) ? null : $t_creditor->deadline;
-
-        $debt_creditor = Debt::select('creditor_phone', 'amount_debt')
-            ->where('creditor_phone', $t_creditor->recipient_phone)
-            ->where('debitor_phone', $user->phone_number)
-            ->where('amount_debt', '>', 0)
-            ->orWhere('debitor_phone', $t_creditor->recipient_phone)
-            ->where('creditor_phone', $user->phone_number)
-            ->where('amount_debt', '<', 0)
-            ->first();
-        $near_creditor = (empty($debt_creditor)) ? null : $debt_creditor;
-        $debt_debitor = Debt::select('debitor_phone', 'amount_debt')
-            ->where('debitor_phone', $t_debitor->payer_phone)
-            ->where('creditor_phone', $user->phone_number)
-            ->where('amount_debt', '>', 0)
-            ->orWhere('creditor_phone', $t_debitor->payer_phone)
-            ->where('debitor_phone', $user->phone_number)
-            ->where('amount_debt', '<', 0)
-            ->first();
-        $near_debitor = (empty($debt_debitor)) ? null : $debt_debitor;
+        $near_creditor = null;
+        if (!empty($t_creditor)) {
+            $debt_creditor = Debt::where('creditor_phone', $t_creditor->recipient_phone)
+                ->where('debitor_phone', $user->phone_number)
+                ->where('amount_debt', '>', 0)
+                ->orWhere('debitor_phone', $t_creditor->recipient_phone)
+                ->where('creditor_phone', $user->phone_number)
+                ->where('amount_debt', '<', 0)
+                ->first();
+            $near_creditor = ((empty($debt_creditor)) ? null :
+                ($debt_creditor->debitor_phone == $user->phone_number)) ? collect($debt_creditor)->only(['creditor_phone', 'amount_debt']) :
+                collect($debt_creditor)->only(['debitor_phone', 'amount_debt']);
+        }
+        $near_debitor = null;
+        if (!empty($t_debitor)) {
+            $debt_debitor = Debt::
+            where('debitor_phone', $t_debitor->payer_phone)
+                ->where('creditor_phone', $user->phone_number)
+                ->where('amount_debt', '>', 0)
+                ->orWhere('creditor_phone', $t_debitor->payer_phone)
+                ->where('debitor_phone', $user->phone_number)
+                ->where('amount_debt', '<', 0)
+                ->first();
+            $near_debitor = ((empty($debt_debitor)) ? null :
+                ($debt_debitor->debitor_phone == $user->phone_number)) ? collect($debt_debitor)->only(['creditor_phone', 'amount_debt']) :
+                collect($debt_debitor)->only(['debitor_phone', 'amount_debt']);
+        }
         $response = [
             'message' => 'Near Creditor & Near Debitor',
             'data' => [
@@ -103,7 +111,7 @@ class nearController extends Controller
             ->orWhere('payer_phone', $debt->creditor_phone)
             ->where('recipient_phone', $debt->debitor_phone)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate($request->page_size);
         $t_debt = Transaction::where('payer_phone', $debt->debitor_phone)
             ->where('recipient_phone', $debt->creditor_phone)
             ->where('type', "debt")
@@ -113,24 +121,16 @@ class nearController extends Controller
             ->where('type', "debt")
             ->where('created_at', '<', Carbon::now())
             ->latest()->first();
-        $data = $this->paginate($transactions);
         $response = [
             'message' => 'Select User',
             'data' => [
                 'amount ' => $debt->amount_debt,
                 'deadline' => $t_debt->deadline,
                 'user' => $select_user,
-                'transactions' => $data,
+                'transactions' => $transactions,
             ],
             'success' => true,
         ];
         return response($response, 200);
-    }
-
-    public function paginate($items, $perPage = 10, $page = null, $options = [])
-    {
-        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
-        $items = $items instanceof Collection ? $items : Collection::make($items);
-        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
     }
 }

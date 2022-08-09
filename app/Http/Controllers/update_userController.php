@@ -31,10 +31,10 @@ class update_userController extends Controller
         }
         if ($request->hasFile('image')) {
             $filename = $request->image->getClientOriginalName();
-            $file = $request->image->storeAs('storage/images', $filename, 'public');
+            $file = $request->image->storeAs('images', $filename, 'public');
             $user->update(array_merge(
                 $validator->validated(), [
-                    'image' => $file,
+                    'image' => 'storage/' . $file,
                 ]
             ));
         }

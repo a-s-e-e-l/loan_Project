@@ -18,12 +18,13 @@ class Debt extends Model
         'note',
     ];
 
-    public function users()
+    public function user()
     {
         return $this->belongsTo(User::class, 'debitor_phone', 'phone_number');
     }
-//    public function users_cr()
-//    {
-//        return $this->belongsTo(User::class, 'creditor_phone', 'phone_number');
-//    }
+
+    public function user_cr()
+    {
+        return $this->belongsTo(User::class, 'creditor_phone', 'phone_number');
+    }
 }

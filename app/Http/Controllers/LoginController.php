@@ -46,11 +46,18 @@ class LoginController extends Controller
                 $user->activation_code = null;
                 $user->save();
                 $token = $user->createToken('auth_token')->plainTextToken;
+                if ($user->draft == 0) {
+                    $data = collect($user)->only(['phone_number', 'first_name', 'last_name', 'email',
+                        'date_of_birth', 'address', 'address_line1', 'address_line2', 'image']);
+                } else {
+                    $data = null;
+                }
                 $response = [
                     'message' => 'token user',
                     'data' => [
                         'token' => $token,
                         'draft' => $user->draft,
+                        'user' => $data,
                     ],
                     'success' => true,
                 ];
