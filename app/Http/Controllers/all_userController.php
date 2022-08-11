@@ -78,13 +78,13 @@ class all_userController extends Controller
             ];
             return response($response, 200);
         }
-//        $dr = array();
-//        foreach ($debt as $d) {
-//            array_push($dr, empty($d->user_cr) ? $d->user : $d->user_cr);
-//        }
+        $dr = array();
+        foreach ($debt as $d) {
+            array_push($dr, empty($d->user_cr) ? $d->user : $d->user_cr);
+        }
         $response = [
             'message' => 'Users',
-            'data' => $debt,
+            'data' => $dr,
             'success' => true,
         ];
         return response($response, 200);
@@ -156,13 +156,13 @@ class all_userController extends Controller
             ->orderBy('updated_at', 'desc')
             ->paginate($request->page_size);
         $debt = (empty($debts)) ? null : $debts;
-//        $dr = array();
-//        foreach ($debt as $d) {
-//            array_push($dr, empty($d->user_cr) ? $d->user : $d->user_cr);
-//        }
+        $dr = array();
+        foreach ($debt as $d) {
+            array_push($dr, empty($d->user_cr) ? $d->user : $d->user_cr);
+        }
         $response = [
             'message' => 'User',
-            'data' => $debt,
+            'data' => $dr,
             'success' => true,
         ];
         return response($response, 200);

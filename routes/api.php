@@ -52,6 +52,8 @@ Route::get('/users/all', [all_userController::class, 'all_user'])->middleware('a
 Route::post('/user/search', [all_userController::class, 'search'])->middleware('auth:sanctum');
 
 Route::post('/users/select', [nearController::class, 'select_user'])->middleware('auth:sanctum');
+Route::post('/users/transaction', [nearController::class, 'transaction'])->middleware('auth:sanctum');
+
 
 Route::get('/creditor/near', [nearController::class, 'near_creditor'])->middleware('auth:sanctum');
 Route::get('/debitor/near', [nearController::class, 'near_debitor'])->middleware('auth:sanctum');

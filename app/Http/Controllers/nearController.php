@@ -7,9 +7,6 @@ use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -71,11 +68,55 @@ class nearController extends Controller
         return response($response, 200);
     }
 
+    public function transaction(Request $request)
+    {
+        $user = Auth::user();
+        $validator = Validator::make($request->all(), [
+            'select_phone' => 'Required|regex:/^([0-9\s\-\+\(\)]*)$/|min:10',
+            'page_size' => 'Required',
+        ]);
+        if ($validator->fails()) {
+            $response = [
+                'message' => $validator->errors(),
+                'data' => null,
+                'success' => false,
+            ];
+            return response($response, 200);
+        }
+        $debts = Debt::where('creditor_phone', $request->select_phone)
+            ->where('debitor_phone', $user->phone_number)
+            ->orWhere('debitor_phone', $request->select_phone)
+            ->where('creditor_phone', $user->phone_number)
+            ->first();
+        $debt = (empty($debts)) ? null : $debts;
+        if (empty($debt)) {
+            $response = [
+                'message' => 'Error User Select',
+                'data' => $debt,
+                'success' => false,
+            ];
+            return response($response, 200);
+        }
+        $transactions = Transaction::select('payer_phone', 'recipient_phone', 'amount', 'created_at')
+            ->where('payer_phone', $debt->debitor_phone)
+            ->where('recipient_phone', $debt->creditor_phone)
+            ->orWhere('payer_phone', $debt->creditor_phone)
+            ->where('recipient_phone', $debt->debitor_phone)
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->page_size);
+        $response = [
+            'message' => 'Select User',
+            'data' => $transactions,
+            'success' => true,
+        ];
+        return response($response, 200);
+    }
+
     public function select_user(Request $request)
     {
         $user = Auth::user();
         $validator = Validator::make($request->all(), [
-            'select_phone' => 'Required|regex:/^([0-9\s\-\+\(\)]*)$/|min:10'
+            'select_phone' => 'Required|regex:/^([0-9\s\-\+\(\)]*)$/|min:10',
         ]);
         if ($validator->fails()) {
             $response = [
@@ -105,13 +146,13 @@ class nearController extends Controller
             ->where('id', '!=', $user->id)
             ->first();
         $select_user = collect($select_user)->only(['phone_number', 'first_name', 'last_name', 'image']);
-        $transactions = Transaction::select('payer_phone', 'recipient_phone', 'amount', 'created_at')
-            ->where('payer_phone', $debt->debitor_phone)
-            ->where('recipient_phone', $debt->creditor_phone)
-            ->orWhere('payer_phone', $debt->creditor_phone)
-            ->where('recipient_phone', $debt->debitor_phone)
-            ->orderBy('created_at', 'desc')
-            ->paginate($request->page_size);
+//        $transactions = Transaction::select('payer_phone', 'recipient_phone', 'amount', 'created_at')
+//            ->where('payer_phone', $debt->debitor_phone)
+//            ->where('recipient_phone', $debt->creditor_phone)
+//            ->orWhere('payer_phone', $debt->creditor_phone)
+//            ->where('recipient_phone', $debt->debitor_phone)
+//            ->orderBy('created_at', 'desc')
+//            ->paginate($request->page_size);
         $t_debt = Transaction::where('payer_phone', $debt->debitor_phone)
             ->where('recipient_phone', $debt->creditor_phone)
             ->where('type', "debt")
@@ -127,7 +168,7 @@ class nearController extends Controller
                 'amount ' => $debt->amount_debt,
                 'deadline' => $t_debt->deadline,
                 'user' => $select_user,
-                'transactions' => $transactions,
+//                'transactions' => $transactions,
             ],
             'success' => true,
         ];
