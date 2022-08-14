@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Debt;
 use App\Models\Transaction;
 use App\Models\User;
@@ -29,13 +30,13 @@ class paymentController extends Controller
         }
         // is account exist
         $debt = null;
-        $creditor_phone = User::where('phone_number', $request['phone'])->first();
+        $creditor_phone = User::where('phone_number', $request->phone)->first();
         if (!empty($creditor_phone)) {
-            $debt_debitor = Debt::where('debitor_phone', $user['phone_number'])
-                ->where('creditor_phone', $request['phone'])
+            $debt_debitor = Debt::where('debitor_phone', $user->phone_number)
+                ->where('creditor_phone', $request->phone)
                 ->first();
-            $debt_creditor = Debt::where('creditor_phone', $user['phone_number'])
-                ->where('debitor_phone', $request['phone'])
+            $debt_creditor = Debt::where('creditor_phone', $user->phone_number)
+                ->where('debitor_phone', $request->phone)
                 ->first();
             $debt = ((empty($debt_debitor) && empty($debt_creditor)) ? null : (empty($debt_creditor))) ? $debt_debitor : $debt_creditor;
         } else {
@@ -45,8 +46,8 @@ class paymentController extends Controller
         }
         // create user & create debt
         $transaction_data = array(
-            'recipient_phone' => $request['phone'],
-            'payer_phone' => $user['phone_number'],
+            'recipient_phone' => $request->phone,
+            'payer_phone' => $user->phone_number,
             'amount' => $request['amount'],
             'note' => $request['note'],
             'deadline' => $request['deadline'],
@@ -122,26 +123,26 @@ class paymentController extends Controller
         }
         // is account exist
         $debt = null;
-        $debit_phone = User::where('phone_number', $request['phone'])->first();
+        $debit_phone = User::where('phone_number', $request->phone)->first();
         if (!empty($debit_phone)) {
-            $debt_debitor = Debt::where('debitor_phone', $user['phone_number'])
-                ->where('creditor_phone', $request['phone'])
+            $debt_debitor = Debt::where('debitor_phone', $user->phone_number)
+                ->where('creditor_phone', $request->phone)
                 ->first();
-            $debt_creditor = Debt::where('creditor_phone', $user['phone_number'])
+            $debt_creditor = Debt::where('creditor_phone', $user->phone_number)
                 ->where('debitor_phone', $request['phone'])
                 ->first();
             $debt = ((empty($debt_debitor) && empty($debt_creditor)) ? null : (empty($debt_creditor))) ? $debt_debitor : $debt_creditor;
         } else {
             User::create(array(
-                'phone_number' => $request['phone'],
+                'phone_number' => $request->phone,
             ));
         }
         // create user & create credit
         $amount = $request['amount'];
         if ($debt == null) {
             $debt_data = array(
-                'debitor_phone' => $request['phone'],
-                'creditor_phone' => $user['phone_number'],
+                'debitor_phone' => $request->phone,
+                'creditor_phone' => $user->phone_number,
                 'amount_debt' => $request['amount'],
                 'note' => $request->note,
             );
@@ -154,8 +155,8 @@ class paymentController extends Controller
             $debt->save();
         }
         $transaction_data = array(
-            'recipient_phone' => $user['phone_number'],
-            'payer_phone' => $request['phone'],
+            'recipient_phone' => $user->phone_number,
+            'payer_phone' => $request->phone,
             'amount' => $request['amount'],
             'note' => $request['note'],
             'deadline' => $request['deadline'],

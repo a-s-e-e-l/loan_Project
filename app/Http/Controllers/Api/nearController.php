@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Debt;
 use App\Models\Transaction;
 use App\Models\User;
@@ -37,9 +38,9 @@ class nearController extends Controller
                 ->where('creditor_phone', $user->phone_number)
                 ->where('amount_debt', '<', 0)
                 ->first();
-            $near_creditor = ((empty($debt_creditor)) ? null :
-                ($debt_creditor->debitor_phone == $user->phone_number)) ? collect($debt_creditor)->only(['creditor_phone', 'amount_debt']) :
-                collect($debt_creditor)->only(['debitor_phone', 'amount_debt']);
+            $near_creditor = (empty($debt_creditor)) ? null :
+                (($debt_creditor->debitor_phone == $user->phone_number) ? collect($debt_creditor)->only('creditor_phone', 'amount_debt') :
+                    collect($debt_creditor)->only('debitor_phone', 'amount_debt'));
         }
         $near_debitor = null;
         if (!empty($t_debitor)) {
@@ -51,17 +52,23 @@ class nearController extends Controller
                 ->where('debitor_phone', $user->phone_number)
                 ->where('amount_debt', '<', 0)
                 ->first();
-            $near_debitor = ((empty($debt_debitor)) ? null :
-                ($debt_debitor->debitor_phone == $user->phone_number)) ? collect($debt_debitor)->only(['creditor_phone', 'amount_debt']) :
-                collect($debt_debitor)->only(['debitor_phone', 'amount_debt']);
+            $near_debitor = (empty($debt_debitor)) ? null :
+                (($debt_debitor->debitor_phone == $user->phone_number) ? collect($debt_debitor)->only('creditor_phone', 'amount_debt') :
+                    collect($debt_debitor)->only('debitor_phone', 'amount_debt'));
         }
+        $dead_creditor = (empty($near_creditor)) ? null : $deadline_creditor;
+        $dead_debitor = (empty($near_debitor)) ? null : $deadline_debitor;
         $response = [
             'message' => 'Near Creditor & Near Debitor',
             'data' => [
-                'near creditor' => $near_creditor,
-                'deadline creditor' => $deadline_creditor,
-                'near debitor' => $near_debitor,
-                'deadline debitor' => $deadline_debitor,
+//                'near creditor' => $near_creditor,
+//                'deadline creditor' => $dead_creditor,
+//                'near debitor' => $near_debitor,
+//                'deadline debitor' => $dead_debitor,
+                'near debitor' => $near_creditor,
+                'deadline debitor' => $dead_creditor,
+                'near creditor' => $near_debitor,
+                'deadline creditor' => $dead_debitor,
             ],
             'success' => true,
         ];
@@ -97,7 +104,7 @@ class nearController extends Controller
             ];
             return response($response, 200);
         }
-        $transactions = Transaction::select('payer_phone', 'recipient_phone', 'amount', 'created_at')
+        $transactions = Transaction::select('payer_phone', 'recipient_phone', 'amount', 'created_at', 'type')
             ->where('payer_phone', $debt->debitor_phone)
             ->where('recipient_phone', $debt->creditor_phone)
             ->orWhere('payer_phone', $debt->creditor_phone)
@@ -162,11 +169,15 @@ class nearController extends Controller
             ->where('type', "debt")
             ->where('created_at', '<', Carbon::now())
             ->latest()->first();
+        $dead_line = ($debt->amount_debt == 0) ? 0 : $t_debt->deadline;
+        $amount = (($debt->amount_debt > 0 && $debt->debitor_phone == $user->phone_number) || ($debt->amount_debt < 0 && $debt->debitor_phone == $user->phone_number))
+            ? $debt->amount_debt *= -1 : $debt->amount_debt;
         $response = [
             'message' => 'Select User',
             'data' => [
                 'amount ' => $debt->amount_debt,
-                'deadline' => $t_debt->deadline,
+//                $amount,
+                'deadline' => $dead_line,
                 'user' => $select_user,
 //                'transactions' => $transactions,
             ],

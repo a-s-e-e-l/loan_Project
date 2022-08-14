@@ -1,13 +1,13 @@
 <?php
 
-use App\Http\Controllers\LoginController;
-use App\Http\Controllers\Code_requestController;
-use App\Http\Controllers\update_userController;
-use App\Http\Controllers\paymentController;
-use App\Http\Controllers\pay_loanController;
-use App\Http\Controllers\all_userController;
-use App\Http\Controllers\nearController;
-use App\Http\Controllers\notificationController;
+use App\Http\Controllers\Api\all_userController;
+use App\Http\Controllers\Api\Code_requestController;
+use App\Http\Controllers\Api\LoginController;
+use App\Http\Controllers\Api\nearController;
+use App\Http\Controllers\Api\notificationController;
+use App\Http\Controllers\Api\pay_loanController;
+use App\Http\Controllers\Api\paymentController;
+use App\Http\Controllers\Api\update_userController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -47,13 +47,11 @@ Route::post('/accept', [paymentController::class, 'accept'])->middleware('auth:s
 Route::post('/filter', [all_userController::class, 'filter'])->middleware('auth:sanctum');
 Route::get('/near', [nearController::class, 'near_debt'])->middleware('auth:sanctum');
 
-
 Route::get('/users/all', [all_userController::class, 'all_user'])->middleware('auth:sanctum');
 Route::post('/user/search', [all_userController::class, 'search'])->middleware('auth:sanctum');
 
 Route::post('/users/select', [nearController::class, 'select_user'])->middleware('auth:sanctum');
 Route::post('/users/transaction', [nearController::class, 'transaction'])->middleware('auth:sanctum');
-
 
 Route::get('/creditor/near', [nearController::class, 'near_creditor'])->middleware('auth:sanctum');
 Route::get('/debitor/near', [nearController::class, 'near_debitor'])->middleware('auth:sanctum');
