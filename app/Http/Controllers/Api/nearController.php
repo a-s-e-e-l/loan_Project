@@ -16,59 +16,108 @@ class nearController extends Controller
     public function near_debt()
     {
         $user = Auth::user();
-        $t_debitor = Transaction::where('recipient_phone', $user->phone_number)
-            ->where('type', "debt")
-            ->orderBy('deadline')
-            ->where('deadline', '>', Carbon::now())
-            ->latest()->first();
-        $deadline_debitor = (empty($t_debitor)) ? null : $t_debitor->deadline;
+//        $t_debitor = Transaction::where('recipient_phone', $user->phone_number)
+//            ->where('type', "debt")
+//            ->orderBy('deadline')
+//            ->where('deadline', '>', Carbon::now())
+//            ->latest()->first();
+//        $deadline_debitor = (empty($t_debitor)) ? null : $t_debitor->deadline;
+//
+//        $t_creditor = Transaction::where('payer_phone', $user->phone_number)
+//            ->where('type', "debt")
+//            ->orderBy('deadline')
+//            ->where('deadline', '>', Carbon::now())
+//            ->latest()->first();
+//        $deadline_creditor = (empty($t_creditor)) ? null : $t_creditor->deadline;
+//        $near_creditor = null;
+//        if (!empty($t_creditor)) {
+//            $debt_creditor = Debt::where('creditor_phone', $t_creditor->recipient_phone)
+//                ->where('debitor_phone', $user->phone_number)
+//                ->where('amount_debt', '>', 0)
+//                ->orWhere('debitor_phone', $t_creditor->recipient_phone)
+//                ->where('creditor_phone', $user->phone_number)
+//                ->where('amount_debt', '<', 0)
+//                ->first();
+//            $near_creditor = (empty($debt_creditor)) ? null :
+//                (($debt_creditor->debitor_phone == $user->phone_number) ? collect($debt_creditor)->only('creditor_phone', 'amount_debt') :
+//                    collect($debt_creditor)->only('debitor_phone', 'amount_debt'));
+//        }
+//        $near_debitor = null;
+//        if (!empty($t_debitor)) {
+//            $debt_debitor = Debt::
+//            where('debitor_phone', $t_debitor->payer_phone)
+//                ->where('creditor_phone', $user->phone_number)
+//                ->where('amount_debt', '>', 0)
+//                ->orWhere('creditor_phone', $t_debitor->payer_phone)
+//                ->where('debitor_phone', $user->phone_number)
+//                ->where('amount_debt', '<', 0)
+//                ->first();
+//            $near_debitor = (empty($debt_debitor)) ? null :
+//                (($debt_debitor->debitor_phone == $user->phone_number) ? collect($debt_debitor)->only('creditor_phone', 'amount_debt') :
+//                    collect($debt_debitor)->only('debitor_phone', 'amount_debt'));
+//        }
+//        $dead_creditor = (empty($near_creditor)) ? null : $deadline_creditor;
+//        $dead_debitor = (empty($near_debitor)) ? null : $deadline_debitor;
 
-        $t_creditor = Transaction::where('payer_phone', $user->phone_number)
-            ->where('type', "debt")
-            ->orderBy('deadline')
-            ->where('deadline', '>', Carbon::now())
-            ->latest()->first();
-        $deadline_creditor = (empty($t_creditor)) ? null : $t_creditor->deadline;
-        $near_creditor = null;
-        if (!empty($t_creditor)) {
-            $debt_creditor = Debt::where('creditor_phone', $t_creditor->recipient_phone)
-                ->where('debitor_phone', $user->phone_number)
-                ->where('amount_debt', '>', 0)
-                ->orWhere('debitor_phone', $t_creditor->recipient_phone)
-                ->where('creditor_phone', $user->phone_number)
-                ->where('amount_debt', '<', 0)
-                ->first();
-            $near_creditor = (empty($debt_creditor)) ? null :
-                (($debt_creditor->debitor_phone == $user->phone_number) ? collect($debt_creditor)->only('creditor_phone', 'amount_debt') :
-                    collect($debt_creditor)->only('debitor_phone', 'amount_debt'));
+        $getalltotalRed = Debt::select('amount_debt')
+            ->where('creditor_phone', $user->phone_number)
+            ->where('amount_debt', '>', 0)
+            ->orWhere('debitor_phone', $user->phone_number)
+            ->where('amount_debt', '<', 0)
+            ->get()
+            ->toArray();
+        $negative = 0;
+        $positive = 0;
+        foreach ($getalltotalRed as $value) {
+            $amount = $value['amount_debt'];
+            if ($amount < 0) {
+                $negative += -$amount;
+            } else {
+                $positive += $amount;
+            }
         }
-        $near_debitor = null;
-        if (!empty($t_debitor)) {
-            $debt_debitor = Debt::
-            where('debitor_phone', $t_debitor->payer_phone)
-                ->where('creditor_phone', $user->phone_number)
-                ->where('amount_debt', '>', 0)
-                ->orWhere('creditor_phone', $t_debitor->payer_phone)
-                ->where('debitor_phone', $user->phone_number)
-                ->where('amount_debt', '<', 0)
-                ->first();
-            $near_debitor = (empty($debt_debitor)) ? null :
-                (($debt_debitor->debitor_phone == $user->phone_number) ? collect($debt_debitor)->only('creditor_phone', 'amount_debt') :
-                    collect($debt_debitor)->only('debitor_phone', 'amount_debt'));
+        $total = $positive + $negative;
+        $dataRed = array(
+            'amount_debt' => $total,
+        );
+
+        $getalltotalGreen = Debt::select('amount_debt')
+            ->where('debitor_phone', $user->phone_number)
+            ->where('amount_debt', '>', 0)
+            ->orWhere('creditor_phone', $user->phone_number)
+            ->where('amount_debt', '<', 0)
+            ->get()
+            ->toArray();
+        $negative = 0;
+        $positive = 0;
+        foreach ($getalltotalGreen as $value) {
+            $amount = $value['amount_debt'];
+            if ($amount < 0) {
+                $negative += -$amount;
+            } else {
+                $positive += $amount;
+            }
         }
-        $dead_creditor = (empty($near_creditor)) ? null : $deadline_creditor;
-        $dead_debitor = (empty($near_debitor)) ? null : $deadline_debitor;
+        $total = $positive + $negative;
+        $dataGreen = array(
+//            'positive' => $positive,
+//            'negative' => $negative,
+            'amount_debt' => $total,
+        );
+
         $response = [
             'message' => 'Near Creditor & Near Debitor',
             'data' => [
 //                'near creditor' => $near_creditor,
+                'near creditor' => $dataGreen,
 //                'deadline creditor' => $dead_creditor,
 //                'near debitor' => $near_debitor,
+                'near debitor' => $dataRed,
 //                'deadline debitor' => $dead_debitor,
-                'near debitor' => $near_creditor,
-                'deadline debitor' => $dead_creditor,
-                'near creditor' => $near_debitor,
-                'deadline creditor' => $dead_debitor,
+//                'near debitor' => $near_creditor,
+//                'deadline debitor' => $dead_creditor,
+//                'near creditor' => $near_debitor,
+//                'deadline creditor' => $dead_debitor,
             ],
             'success' => true,
         ];
