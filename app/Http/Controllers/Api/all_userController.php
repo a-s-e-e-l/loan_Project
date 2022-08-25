@@ -118,7 +118,7 @@ class all_userController extends Controller
         foreach ($debt as $d) {
             array_push($dr, empty($d->user_cr) ? $d->user : $d->user_cr);
         }
-        $data = collect($dr)->take(5);
+        $data = collect($dr)->take(6);
         $response = [
             'message' => 'All Users',
             'data' => $data,
