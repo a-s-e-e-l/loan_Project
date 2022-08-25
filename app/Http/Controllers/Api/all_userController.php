@@ -95,16 +95,16 @@ class all_userController extends Controller
     {
         $user = Auth::user();
         $debts = Debt::with(array('user_cr' => function ($q) {
-            $q->select('phone_number', 'first_name', 'last_name', 'image', 'updated_at')
+            $q->select('phone_number', 'first_name', 'last_name', 'image')
                 ->where('phone_number', '!=', Auth::user()->phone_number);
         }, 'user' => function ($q) {
-            $q->select('phone_number', 'first_name', 'last_name', 'image', 'updated_at')
+            $q->select('phone_number', 'first_name', 'last_name', 'image')
                 ->where('phone_number', '!=', Auth::user()->phone_number);
         }))
             ->where('debitor_phone', $user->phone_number)
             ->orWhere('creditor_phone', $user->phone_number)
             ->orderBy('updated_at', 'desc')
-            ->get();
+            ->take(6)->get();
         $debt = (empty($debts)) ? null : $debts;
         if (empty($debt)) {
             $response = [
@@ -116,12 +116,11 @@ class all_userController extends Controller
         }
         $dr = array();
         foreach ($debt as $d) {
-            array_push($dr, empty($d->user_cr) ? $d->user : $d->user_cr);
+            array_push($dr, empty($d->user_cr) ? ['user' => $d->user, 'updated_at' => $d->updated_at] : ['user' => $d->user_cr, 'updated_at' => $d->updated_at]);
         }
-        $data = collect($dr)->take(6);
         $response = [
             'message' => 'All Users',
-            'data' => $data,
+            'data' => $dr,
             'success' => true,
         ];
         return response($response, 200);
