@@ -218,7 +218,7 @@ class nearController extends Controller
             ->where('type', "debt")
             ->where('created_at', '<', Carbon::now())
             ->latest()->first();
-        $dead_line = ($debt->amount_debt == 0) ? 0 : $t_debt->deadline;
+        $dead_line = ($debt->amount_debt == 0) ? null : $t_debt->deadline;
         $amount = (($debt->amount_debt > 0 && $debt->debitor_phone == $user->phone_number) || ($debt->amount_debt < 0 && $debt->debitor_phone == $user->phone_number))
             ? $debt->amount_debt *= -1 : $debt->amount_debt;
         $response = [

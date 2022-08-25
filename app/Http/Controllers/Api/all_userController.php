@@ -28,10 +28,10 @@ class all_userController extends Controller
         $debt = null;
         if ($request->type == 'a') {
             $debts = Debt::with(array('user_cr' => function ($q) {
-                $q->select('phone_number', 'first_name', 'last_name', 'image')
+                $q->select('phone_number', 'first_name', 'last_name', 'image', 'updated_at')
                     ->where('phone_number', '!=', Auth::user()->phone_number);
             }, 'user' => function ($q) {
-                $q->select('phone_number', 'first_name', 'last_name', 'image')
+                $q->select('phone_number', 'first_name', 'last_name', 'image', 'updated_at')
                     ->where('phone_number', '!=', Auth::user()->phone_number);
             }))
                 ->where('debitor_phone', $user->phone_number)
@@ -41,10 +41,10 @@ class all_userController extends Controller
             $debt = (empty($debts)) ? null : $debts;
         } elseif ($request->type == 'd') {
             $debts = Debt::with(array('user_cr' => function ($q) {
-                $q->select('phone_number', 'first_name', 'last_name', 'image')
+                $q->select('phone_number', 'first_name', 'last_name', 'image', 'updated_at')
                     ->where('phone_number', '!=', Auth::user()->phone_number);
             }, 'user' => function ($q) {
-                $q->select('phone_number', 'first_name', 'last_name', 'image')
+                $q->select('phone_number', 'first_name', 'last_name', 'image', 'updated_at')
                     ->where('phone_number', '!=', Auth::user()->phone_number);
             }))
                 ->where('creditor_phone', $user->phone_number)
@@ -56,10 +56,10 @@ class all_userController extends Controller
             $debt = (empty($debts)) ? null : $debts;
         } elseif ($request->type == 'c') {
             $debts = Debt::with(array('user_cr' => function ($q) {
-                $q->select('phone_number', 'first_name', 'last_name', 'image')
+                $q->select('phone_number', 'first_name', 'last_name', 'image', 'updated_at')
                     ->where('phone_number', '!=', Auth::user()->phone_number);
             }, 'user' => function ($q) {
-                $q->select('phone_number', 'first_name', 'last_name', 'image')
+                $q->select('phone_number', 'first_name', 'last_name', 'image', 'updated_at')
                     ->where('phone_number', '!=', Auth::user()->phone_number);
             }))
                 ->where('debitor_phone', $user->phone_number)
@@ -95,10 +95,10 @@ class all_userController extends Controller
     {
         $user = Auth::user();
         $debts = Debt::with(array('user_cr' => function ($q) {
-            $q->select('phone_number', 'first_name', 'last_name', 'image')
+            $q->select('phone_number', 'first_name', 'last_name', 'image', 'updated_at')
                 ->where('phone_number', '!=', Auth::user()->phone_number);
         }, 'user' => function ($q) {
-            $q->select('phone_number', 'first_name', 'last_name', 'image')
+            $q->select('phone_number', 'first_name', 'last_name', 'image', 'updated_at')
                 ->where('phone_number', '!=', Auth::user()->phone_number);
         }))
             ->where('debitor_phone', $user->phone_number)

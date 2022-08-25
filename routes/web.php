@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Auth\RegisterController;
+use App\Http\Controllers\Admin\Dash_transaction\TransactionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\Dash_user\UserController;
@@ -29,43 +30,38 @@ Route::get('/dashboard/user', function () {
     return view('dashboard1');
 })->middleware('auth:sanctum');
 
-//    ->middleware(['auth'])->name('dashboard');
-
 require __DIR__ . '/auth.php';
-//require __DIR__ . '/admin.php';
-
 
 Route::get('/admin', function () {
     return view('new');
-});
+})->middleware('auth:sanctum');
 
 Route::post('/lang', [LocalizationController::class, 'setLang']);
 
-Route::post('/foo', function () {
-    echo 1;
-    return;
-});
 Route::get('register', [RegisterController::class, 'create'])
     ->name('register');
 Route::get('login', [LoginController::class, 'create'])
     ->name('login');
-//Route::get('login', [LoginController::class, 'create']);
-//Route::get('register', [RegisterController::class, 'create']);
-//
-Route::get('user', [UserController::class, 'show'])
-    ->name('user');
+Route::controller(UserController::class)->group(function () {
+    Route::get('users', 'index')->name('users')->middleware('auth:sanctum');
+    Route::get('user/edit/{id}', 'edit')->name('user.edit')->middleware('auth:sanctum');
+    Route::get('user/create', 'create')->name('user.create')->middleware('auth:sanctum');
+    Route::post('user/store', 'store')->name('user.store')->middleware('auth:sanctum');
+    Route::get('user/destroy/{id}', 'destroy')->name('user.destroy')->middleware('auth:sanctum');
+    Route::get('user/show/{id}', 'show')->name('user.show')->middleware('auth:sanctum');
+    Route::put('user/update/{id}', 'update')->name('user.update')->middleware('auth:sanctum');
+});
+Route::controller(TransactionController::class)->group(function () {
+    Route::get('transactions', 'index')->name('transactions')->middleware('auth:sanctum');
+    Route::get('transaction/edit/{id}', 'edit')->name('transaction.edit')->middleware('auth:sanctum');
+    Route::get('transaction/create', 'create')->name('transaction.create')->middleware('auth:sanctum');
+    Route::post('transaction/store', 'store')->name('transaction.store')->middleware('auth:sanctum');
+    Route::get('transaction/destroy/{id}', 'destroy')->name('transaction.destroy')->middleware('auth:sanctum');
+    Route::get('transaction/show/{id}', 'show')->name('transaction.show')->middleware('auth:sanctum');
+    Route::put('transaction/update/{id}', 'update')->name('transaction.update')->middleware('auth:sanctum');
+});
+
+//Route::resource('users', UserController::class)->middleware('auth:sanctum');
+
 Route::post('login', [LoginController::class, 'store']);
 Route::post('register', [RegisterController::class, 'store']);
-
-
-Route::group([
-    'namespace' => 'Auth',
-], function () {
-    Route::get('/adminpanel', function () {
-        return view('layout.adminpanel.dashboard');
-    });
-//    Route::post('/log', [LoginController::class, 'store']);
-
-// ... existing routes
-
-});
