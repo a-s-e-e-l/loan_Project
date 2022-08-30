@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Auth\RegisterController;
+use App\Http\Controllers\Admin\Dash_debt\DebtController;
 use App\Http\Controllers\Admin\Dash_transaction\TransactionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\Auth\LoginController;
@@ -39,7 +40,7 @@ Route::get('/admin', function () {
 Route::post('/lang', [LocalizationController::class, 'setLang']);
 
 Route::get('register', [RegisterController::class, 'create'])
-    ->name('register');
+    ->name('register')->middleware('auth:sanctum');
 Route::get('login', [LoginController::class, 'create'])
     ->name('login');
 Route::controller(UserController::class)->group(function () {
@@ -60,8 +61,17 @@ Route::controller(TransactionController::class)->group(function () {
     Route::get('transaction/show/{id}', 'show')->name('transaction.show')->middleware('auth:sanctum');
     Route::put('transaction/update/{id}', 'update')->name('transaction.update')->middleware('auth:sanctum');
 });
+Route::controller(DebtController::class)->group(function () {
+    Route::get('debts', 'index')->name('debts')->middleware('auth:sanctum');
+    Route::get('debt/edit/{id}', 'edit')->name('debt.edit')->middleware('auth:sanctum');
+    Route::get('debt/create', 'create')->name('debt.create')->middleware('auth:sanctum');
+    Route::post('debt/store', 'store')->name('debt.store')->middleware('auth:sanctum');
+    Route::get('debt/destroy/{id}', 'destroy')->name('debt.destroy')->middleware('auth:sanctum');
+    Route::get('debt/show/{id}', 'show')->name('debt.show')->middleware('auth:sanctum');
+    Route::put('debt/update/{id}', 'update')->name('debt.update')->middleware('auth:sanctum');
+});
 
 //Route::resource('users', UserController::class)->middleware('auth:sanctum');
 
 Route::post('login', [LoginController::class, 'store']);
-Route::post('register', [RegisterController::class, 'store']);
+Route::post('register', [RegisterController::class, 'store'])->middleware('auth:sanctum');

@@ -18,7 +18,7 @@ class CreateNotificationsTable extends Migration
             $table->morphs('notifiable');
             $table->text('data');
             $table->string('nontice_from');
-            $table->foreign('nontice_from')->references('phone_number')->on('users');
+            $table->foreign('nontice_from')->references('phone_number')->on('users')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
             $table->softDeletes();

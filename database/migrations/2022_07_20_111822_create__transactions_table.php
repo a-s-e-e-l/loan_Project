@@ -22,8 +22,8 @@ class CreateTransactionsTable extends Migration
             $table->boolean('agree')->default(false);
             $table->enum('type', ['Payment', 'debt']);
             $table->string('note')->nullable();
-            $table->foreign('payer_phone')->references('phone_number')->on('users');
-            $table->foreign('recipient_phone')->references('phone_number')->on('users');
+            $table->foreign('payer_phone')->references('phone_number')->on('users')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('recipient_phone')->references('phone_number')->on('users')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
             $table->softDeletes();
         });

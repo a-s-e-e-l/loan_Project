@@ -22,8 +22,8 @@ class CreateDebtsTable extends Migration
             $table->boolean('agree')->default(false);
             $table->timestamps();
             $table->softDeletes();
-            $table->foreign('creditor_phone')->references('phone_number')->on('users');
-            $table->foreign('debitor_phone')->references('phone_number')->on('users');
+            $table->foreign('creditor_phone')->references('phone_number')->on('users')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('debitor_phone')->references('phone_number')->on('users')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 
